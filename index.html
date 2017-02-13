@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>照片墙</title>
+    <style>
+        html,body,ul,li,img{
+            margin: 0;
+            padding: 0;
+        }
+        ul{
+            list-style: none;
+            width: 480px;
+            height: 640px;
+            background: lightcoral;
+            margin: 5px auto;
+            _padding: 5px;
+        }
+        ul li{
+            float: left;
+            width: 150px;
+            height: 150px;
+            margin: 5px;
+            background: lawngreen;
+            cursor: move;
+        }
+        ul li img{
+            width: 100%;
+            height: 100%;
+            border:none;
+            vertical-align: top;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body>
+<ul>
+    <li><img src="img/1.png" alt=""></li>
+    <li><img src="img/2.png" alt=""></li>
+    <li><img src="img/3.png" alt=""></li>
+    <li><img src="img/4.png" alt=""></li>
+    <li><img src="img/5.png" alt=""></li>
+    <li><img src="img/6.png" alt=""></li>
+    <li><img src="img/7.png" alt=""></li>
+    <li><img src="img/8.png" alt=""></li>
+    <li><img src="img/9.png" alt=""></li>
+    <li><img src="img/10.png" alt=""></li>
+    <li><img src="img/11.png" alt=""></li>
+    <li><img src="img/12.png" alt=""></li>
+</ul>
+<script src="dragClass.js"></script>
+<script src="utils2.0.js"></script>
+<script src="animate.js"></script>
+<script src="event-4.1.js"></script>
+<script>
+    var ul=document.getElementsByTagName("ul")[0];
+    var lis=ul.getElementsByTagName("li");
+    for(var i=lis.length-1;i>=0;i--){
+        //先把这些图片li从float定位成absolute
+        var curLi=lis[i];
+
+        var l=curLi.offsetLeft;
+        var t=curLi.offsetTop;
+        curLi.style.left=l+"px";
+        curLi.style.top=t+"px";
+        curLi.style.margin=0;
+        curLi.style.position="absolute";
+        curLi.l=l;//记录自己的初始位置
+        curLi.t=t;
+        new Drag(lis[i]).on("selfdragstart",increaseZIndex).on("selfdragstart",changeColor).on("selfdragend",resetBg).on("selfdragging",processLi).on("selfdragend",changePosition);
+
+    }
+    function increaseZIndex(){
+        for(var i=0;i<lis.length;i++){
+            lis[i].style.zIndex=0;
+        }
+        this.ele.style.zIndex=1;
+    }
+    function changeColor(){
+            this.ele.style.backgroundColor="pink";
+
+    }
+    function resetBg(){
+        this.ele.style.backgroundColor="";
+    }
+    function processLi(){
+        this["hitedBox"]=[];
+        var a=this["hitedBox"];     //存放的是碰撞上的盒子
+        for(var i=0;i<lis.length;i++){
+            if(lis[i]===this.ele){//自己就不进行碰撞检测
+                continue;
+            }
+            lis[i].style.backgroundColor="";
+            if(isHited(this.ele,lis[i])){
+                lis[i].style.backgroundColor="yellow";
+                a.push(lis[i]);//在拖拽结束的找到这个盒子
+            }
+        }
+    }
+    function isHited(dragBox,staticBox){//判断与其他的图片是不是碰撞了
+                if(dragBox.offsetLeft+dragBox.offsetWidth<staticBox.offsetLeft||
+                dragBox.offsetLeft>staticBox.offsetLeft+staticBox.offsetWidth||
+                dragBox.offsetTop+dragBox.offsetHeight<staticBox.offsetTop||
+                dragBox.offsetTop>staticBox.offsetTop+staticBox.offsetHeight  ){
+                    return false;
+                }
+                else{
+                    return true;
+                }
+
+    }
+    function changePosition(){
+        //先获取到在拖拽过程中拿到的数组（碰撞过的）
+        //在这几个中找出距离最近的，并交换位置
+        var a=this["hitedBox"];
+        if(a && a.length){ //先找距离最近的
+            for(var i=0;i< a.length;i++){
+                var li=a[i];
+                var x=this.ele.offsetLeft-li.offsetLeft;
+                var y=this.ele.offsetTop-li.offsetTop;
+                //li.distance=x*x+y*y;
+                li.distance=Math.sqrt(Math.pow(x,2)+Math.pow(y,2));//sqrt是开平方  pow(x,n)就是x的n次方
+            }
+            a.sort(function(a,b){
+                return a.distance- b.distance;
+            });
+            var shortLi=a[0];
+            animate(shortLi,{left:this.ele.l,top:this.ele.t},300);
+            animate(this.ele,{left:shortLi.l,top:shortLi.t},300);
+            for(var i=0;i< a.length;i++){
+                a[i].style.backgroundColor="";
+            }
+            var tempObj={
+                l:shortLi.l,
+                t:shortLi.t
+            };
+            shortLi.l=this.ele.l;
+            shortLi.t=this.ele.t;
+            this.ele.l=tempObj.l;
+            this.ele.t=tempObj.t;
+        }
+        else{//如果一个都没有就回到原来的位置
+            animate(this.ele,{left:this.ele.l,top:this.ele.t},300)
+        }
+    }
+</script>
+</body>
+</html>
